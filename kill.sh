@@ -1,6 +1,6 @@
 #!/bin/bash
 
-while read pid; do 
-    kill -SIGINT $pid
-done < pids
+pkill -f ./scripts/files_manager.py
+pkill -f ./scripts/images_processing.py
+pkill -f motion
 
