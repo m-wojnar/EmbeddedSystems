@@ -12,12 +12,12 @@ print('START')
 
 while True:
     image = cv2.imread(LAST_IMG)
-    original = image.copy()
     
     if image is None:
         sleep(1)
         continue
 
+    original = image.copy()
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     _, image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY)
 
