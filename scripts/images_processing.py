@@ -5,12 +5,18 @@ import cv2
 
 
 LAST_IMG = '/var/lib/motion/lastsnap.jpg'
-OUTPUT_IMG = './outputs/equalized.png'
+OUTPUT_IMG = './outputs'
+
+print('START')
 
 
 while True:
     image = cv2.imread(LAST_IMG)
     original = image.copy()
+    
+    if image is None:
+        sleep(1)
+        continue
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     _, image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY)
@@ -30,6 +36,10 @@ while True:
         continue
 
     rect = cv2.minAreaRect(max_contour)
+
+    if rect[2] > 45:
+        rect = (rect[0], (rect[1][1], rect[1][0]), rect[2] - 90)
+
     box = cv2.boxPoints(rect).astype(np.int0)
     width, height = int(rect[1][0]), int(rect[1][1])
 
@@ -41,6 +51,6 @@ while True:
 
     M = cv2.getPerspectiveTransform(src_pts, dst_pts)
     image = cv2.warpPerspective(original, M, (width, height))
-    cv2.imwrite(OUTPUT_IMG, image)
+    cv2.imwrite(f'{OUTPUT_IMG}/out_{rect[2]}.png', image)
 
     sleep(1)
