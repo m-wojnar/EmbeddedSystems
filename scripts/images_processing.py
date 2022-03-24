@@ -1,19 +1,19 @@
 from time import sleep
+import os
 
 import numpy as np
 import cv2
 
 
 LAST_IMG = '/var/lib/motion/lastsnap.jpg'
-OUTPUT_IMG = './outputs'
+SERVER_IMG = './server/static/output.png'
+OUTPUT_IMG = './outputs/output.png'
 
 print('START')
 
 
 while True:
-    image = cv2.imread(LAST_IMG)
-    
-    if image is None:
+    if not os.path.exists(LAST_IMG) or (image := cv2.imread(LAST_IMG)) is None:
         sleep(1)
         continue
 
@@ -51,6 +51,8 @@ while True:
 
     M = cv2.getPerspectiveTransform(src_pts, dst_pts)
     image = cv2.warpPerspective(original, M, (width, height))
-    cv2.imwrite(f'{OUTPUT_IMG}/out_{rect[2]}.png', image)
+
+    cv2.imwrite(SERVER_IMG, image)
+    cv2.imwrite(OUTPUT_IMG, image)
 
     sleep(1)

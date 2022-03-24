@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outputs</title>
+</head>
+
+<body>
+    <img src="../static/output.png" id="image" />
+
+    <script>
+        function update() {
+            var source = '../static/output.png';
+            var timestamp = (new Date()).getTime();
+            var newUrl = source + '?_=' + timestamp;
+            document.getElementById("image").src = newUrl;
+            setTimeout(update, 1000);
+        }
+
+        update();
+    </script>
+</body>
+
+</html>
