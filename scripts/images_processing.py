@@ -1,21 +1,24 @@
-from time import sleep
 import os
 
-import numpy as np
 import cv2
-
+import numpy as np
 
 LAST_IMG = '/var/lib/motion/lastsnap.jpg'
 SERVER_IMG = './server/static/output.png'
 OUTPUT_IMG = './outputs/output.png'
 
-print('START')
 
+def extract_paper() -> np.ndarray:
+    """
+    Extracts white paper from the LAST_IMG, crops image and saves it to 
+    the SERVER_IMG and the OUTPUT_IMG.
 
-while True:
+    returns: np.ndarray
+        a fragment of the LAST_IMG containing white paper
+    """
+
     if not os.path.exists(LAST_IMG) or (image := cv2.imread(LAST_IMG)) is None:
-        sleep(1)
-        continue
+        return None
 
     original = image.copy()
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -32,8 +35,7 @@ while True:
         contours = filter(lambda cont: cv2.arcLength(cont, False) > 1000, contours)
         max_contour = max(contours, key=lambda cont: cv2.contourArea(cont))
     except ValueError:
-        sleep(2)
-        continue
+        return None
 
     rect = cv2.minAreaRect(max_contour)
 
@@ -55,4 +57,4 @@ while True:
     cv2.imwrite(SERVER_IMG, image)
     cv2.imwrite(OUTPUT_IMG, image)
 
-    sleep(1)
+    return image

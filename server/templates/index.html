@@ -9,13 +9,13 @@
 </head>
 
 <body>
-    <img src="../static/output.png" id="image" />
+    <img src="{{ url_for('static', filename='output.png') }}" id="image" />
 
     <script>
         function update() {
-            var source = '../static/output.png';
+            var source = "{{ url_for('static', filename='output.png') }}";
             var timestamp = (new Date()).getTime();
-            var newUrl = source + '?_=' + timestamp;
+            var newUrl = source + "?_=" + timestamp;
             document.getElementById("image").src = newUrl;
             setTimeout(update, 1000);
         }

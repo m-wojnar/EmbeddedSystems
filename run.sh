@@ -1,9 +1,9 @@
 #!/bin/bash
 
+rm -f /var/lib/motion/*
 rm -f ./outputs/*
-rm -f ./var/lib/motion/*
+rm -f ./server/static/output.png
 
 motion &
-python ./scripts/files_manager.py &
-python ./scripts/images_processing.py &
+python ./scripts/main.py &
 python ./server/app.py &
