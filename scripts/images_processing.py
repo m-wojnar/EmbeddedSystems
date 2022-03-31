@@ -54,6 +54,10 @@ def extract_paper() -> np.ndarray:
     M = cv2.getPerspectiveTransform(src_pts, dst_pts)
     image = cv2.warpPerspective(original, M, (width, height))
 
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    image = cv2.medianBlur(image, 5)
+    _, image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY)
+
     cv2.imwrite(SERVER_IMG, image)
     cv2.imwrite(OUTPUT_IMG, image)
 

@@ -19,10 +19,15 @@ def main() -> None:
     remove_old_images(REMOVE_INTERVAL)
 
     while True:
+        print('[START]')
+
         if (image := extract_paper()) is None:
             continue
 
+        print('[EXTRACTED]')
+
         if not (text := pytesseract.image_to_string(image).strip()):
+            print('[READ]')
             continue
 
         print(f'TEXT: "{text}"')
