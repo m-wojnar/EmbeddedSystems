@@ -4,11 +4,10 @@ import pytesseract
 import numpy as np
 import imutils
 import cv2
-import matplotlib.pyplot as plt
 
 
 class PyImageSearchANPR:
-	def __init__(self, minAR=2, maxAR=5, debug=False):
+	def __init__(self, minAR=4, maxAR=6, debug=False):
 		# store the minimum and maximum rectangular aspect ratio
 		# values along with whether or not we are in debug mode
 		self.minAR = minAR
@@ -28,7 +27,7 @@ class PyImageSearchANPR:
 		# perform a blackhat morphological operation that will allow
 		# us to reveal dark regions (i.e., text) on light backgrounds
 		# (i.e., the license plate itself)
-		rectKern = cv2.getStructuringElement(cv2.MORPH_RECT, (13, 5))
+		rectKern = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 5))
 		blackhat = cv2.morphologyEx(gray, cv2.MORPH_BLACKHAT, rectKern)
 		self.debug_imshow("Blackhat", blackhat)
 
@@ -66,7 +65,7 @@ class PyImageSearchANPR:
 
 		# take the bitwise AND between the threshold result and the
 		# light regions of the image
-		thresh = cv2.bitwise_and(thresh, thresh, mask=light)
+		# thresh = cv2.bitwise_and(thresh, thresh, mask=light)
 		thresh = cv2.dilate(thresh, None, iterations=1)
 		thresh = cv2.erode(thresh, None, iterations=1)
 		self.debug_imshow("Final", thresh, waitKey=True)
@@ -92,6 +91,7 @@ class PyImageSearchANPR:
 			# the bounding box to derive the aspect ratio
 			(x, y, w, h) = cv2.boundingRect(c)
 			ar = w / float(h)
+			print(ar)
 
 		# check to see if the aspect ratio is rectangular
 			if ar >= self.minAR and ar <= self.maxAR:
@@ -153,9 +153,8 @@ class PyImageSearchANPR:
 		return (lpText, lpCnt)
 
 print('START')
-image = cv2.imread('license_plates/plate_3.jpg')
+image = cv2.imread('license_plates/plate_5.jpg')
 print(PyImageSearchANPR(debug=True).find_and_ocr(image)[0])
-
 
 
 
