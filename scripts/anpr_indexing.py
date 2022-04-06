@@ -1,5 +1,6 @@
 import cv2
 import pytesseract
+import numpy as np
 
 
 def build_tesseract_options(psm=7):
@@ -12,11 +13,11 @@ def build_tesseract_options(psm=7):
     return options
 
 
-def anpr(image, min_area=1000, min_AR=3, max_AR=6):
+def anpr(image, min_area=1000, min_AR=4, max_AR=5):
     # next, find regions in the image that are light
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     squareKern = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    # light = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, squareKern)
+    light = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, squareKern)
     light = cv2.threshold(gray, 0, 255,
                           cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 
@@ -37,7 +38,8 @@ def anpr(image, min_area=1000, min_AR=3, max_AR=6):
         area = stats[i, cv2.CC_STAT_AREA]
         cX, cY = centroids[i]
 
-        if min_AR < w/float(h) < max_AR and area > min_area:
+        if min_AR < w/h < max_AR and area > min_area:
+            print('aspect ratio:', w/h)
             output = image.copy()
             cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
             cv2.circle(output, (int(cX), int(cY)), 4, (0, 0, 255), -1)
@@ -45,8 +47,13 @@ def anpr(image, min_area=1000, min_AR=3, max_AR=6):
             cv2.imshow("Output", output)
             cv2.imshow("Connected Component", segment)
 
-            plates.append(cv2.medianBlur(cv2.equalizeHist(gray[y:y+h, x:x+w]), 3))
-            cv2.imshow('plate', plates[-1])
+            plate = np.zeros(gray.shape, dtype='uint8')
+            plate[indexed == i] = gray[indexed == i]
+            plate = plate[y:y+h, x:x+w]
+            plate = cv2.equalizeHist(plate)
+            plate = cv2.medianBlur(plate, 3)
+            plates.append(plate)
+            cv2.imshow('plate', plate)
             cv2.waitKey(0)
 
     recognized_texts = []
