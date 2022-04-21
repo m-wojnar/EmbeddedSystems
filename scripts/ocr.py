@@ -2,6 +2,8 @@ import string
 import numpy as np
 import pytesseract
 
+MIN_TEXT_LEN = 5
+
 
 def read_text(image: np.ndarray) -> str:
     """
@@ -18,4 +20,9 @@ def read_text(image: np.ndarray) -> str:
     options = f'-c tessedit_char_whitelist={alphanumeric} --psm 7'
 
     text = pytesseract.image_to_string(image, config=options)
-    return text.strip()
+    text = text.strip()
+
+    if len(text) >= MIN_TEXT_LEN:
+        return text
+    else:
+        return None

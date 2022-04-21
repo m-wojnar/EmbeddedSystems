@@ -1,9 +1,12 @@
 import numpy as np
 import cv2
 
-MIN_AREA = 1000
-MIN_RATIO = 4
-MAX_RATIO = 5
+MIN_AREA, MAX_AREA = 0.003, 0.100
+MIN_RATIO, MAX_RATIO = 4, 5
+
+RECTS_IMG = './server/static/rects.png'
+PROCESSED_IMG = './server/static/processed.png'
+INDEXED_IMG = './server/static/indexed.png'
 
 
 def find_plates(image: np.ndarray) -> list[np.ndarray]:
@@ -17,23 +20,36 @@ def find_plates(image: np.ndarray) -> list[np.ndarray]:
         list of images with extraced plates
     """
 
+    full_area = image.shape[0] * image.shape[1]
+    min_area, max_area = full_area * MIN_AREA, full_area * MAX_AREA
+
     processed = _preprocess_image(image)
     segment_count, indexed, _, _ = cv2.connectedComponentsWithStats(
         processed, 8, cv2.CV_32S)
 
+    idx_copy = indexed.copy().astype(np.float64)
+    idx_copy *= 255 / segment_count
+    idx_copy = cv2.applyColorMap(idx_copy.astype(np.uint8), cv2.COLORMAP_HSV)
+
+    cv2.imwrite(PROCESSED_IMG, processed)
+    cv2.imwrite(INDEXED_IMG, idx_copy)
+
     plates = []
+    image_rects = image.copy()
 
     for i in range(1, segment_count):
         segment = (indexed == i).astype('uint8') * 255
         area = np.sum(segment // 255)
 
-        if area > MIN_AREA:
-            plate = _crop_plate(segment, image)
+        if min_area < area < max_area:
+            plate = _crop_plate(segment, image, image_rects)
             ratio = plate.shape[1] / plate.shape[0]
 
             if MIN_RATIO < ratio < MAX_RATIO:
                 plate = _preproces_plate(plate)
                 plates.append(plate)
+
+    cv2.imwrite(RECTS_IMG, image_rects)
 
     return plates
 
@@ -60,7 +76,7 @@ def _preprocess_image(image: np.ndarray) -> np.ndarray:
     return image
 
 
-def _crop_plate(segment: np.ndarray, image: np.ndarray) -> np.ndarray:
+def _crop_plate(segment: np.ndarray, image: np.ndarray, image_rects: np.ndarray) -> np.ndarray:
     """
     Extracts licence plates images from given image
 
@@ -93,6 +109,11 @@ def _crop_plate(segment: np.ndarray, image: np.ndarray) -> np.ndarray:
 
     M = cv2.getPerspectiveTransform(src_pts, dst_pts)
     plate = cv2.warpPerspective(image, M, (width, height))
+    ratio = plate.shape[1] / plate.shape[0]
+
+    if MIN_RATIO < ratio < MAX_RATIO:
+        src_pts = src_pts.reshape((-1, 1, 2)).astype(np.int32)
+        cv2.polylines(image_rects, [src_pts], True, (0, 255, 0), 3)
 
     return plate
 
