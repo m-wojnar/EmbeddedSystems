@@ -86,6 +86,9 @@ def _crop_plate(segment: np.ndarray, image: np.ndarray, image_rects: np.ndarray)
     image: np.ndarray
         original image
 
+    image_rects: np.ndarray
+        copy of the original image to draw boxes of found plates
+
     returns: np.ndarray
         cropped license plate
     """
