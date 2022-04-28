@@ -44,10 +44,10 @@ def find_plates(image: np.ndarray) -> list[np.ndarray]:
     image_rects = image.copy()
 
     for i in range(1, segment_count):
-        segment = (indexed == i).astype('uint8') * 255
         area = stats[i, cv2.CC_STAT_AREA]
 
         if min_area < area < max_area:
+            segment = (indexed == i).astype('uint8') * 255
             plate = _crop_plate(segment, image, image_rects)
             ratio = plate.shape[1] / plate.shape[0]
 
