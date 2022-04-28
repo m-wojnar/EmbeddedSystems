@@ -23,13 +23,6 @@ red_led = LED("BOARD37")
 blue_led = LED("BOARD38")
 
 
-def reset_led():
-    organge_led.on()
-    white_led.off()
-    red_led.off()
-    blue_led.off()
-
-
 def main() -> None:
     """
     Main program function. It is responsible for execution of consecutive
@@ -43,7 +36,8 @@ def main() -> None:
     remove_old_images(REMOVE_INTERVAL)
 
     while True:
-        reset_led()
+        organge_led.on()
+        white_led.off()
         print('[START]')
 
         if (image := cv2.imread(LAST_IMG)) is None:

@@ -29,7 +29,7 @@ def find_plates(image: np.ndarray) -> list[np.ndarray]:
     min_area, max_area = full_area * MIN_AREA, full_area * MAX_AREA
 
     processed = _preprocess_image(image)
-    segment_count, indexed, _, _ = cv2.connectedComponentsWithStats(
+    segment_count, indexed, stats, _ = cv2.connectedComponentsWithStats(
         processed, 8, cv2.CV_32S)
 
     idx_copy = indexed.copy().astype(np.float64)
@@ -45,7 +45,7 @@ def find_plates(image: np.ndarray) -> list[np.ndarray]:
 
     for i in range(1, segment_count):
         segment = (indexed == i).astype('uint8') * 255
-        area = np.sum(segment // 255)
+        area = stats[i, cv2.CC_STAT_AREA]
 
         if min_area < area < max_area:
             plate = _crop_plate(segment, image, image_rects)
