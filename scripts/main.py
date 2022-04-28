@@ -1,10 +1,12 @@
-from gpiozero import LED, DistanceSensor
+import json
 from time import sleep
+
 import cv2
+from gpiozero import LED, DistanceSensor
 
 from files_manager import remove_old_images
-from plates_recognition import find_plates
 from ocr import read_text
+from plates_recognition import find_plates
 
 LAST_IMG = '/var/lib/motion/lastsnap.jpg'
 SERVER_IMG = './server/static/output.png'
@@ -14,12 +16,11 @@ OUTPUT_TEXT = './server/static/text.txt'
 REMOVE_INTERVAL = 5.0
 SLEEP_TIME = 2.0
 
+distance_sensor = DistanceSensor(echo="BOARD7", trigger="BOARD8")
 organge_led = LED("BOARD35")
 white_led = LED("BOARD36")
 red_led = LED("BOARD37")
 blue_led = LED("BOARD38")
-
-distance_sensor = DistanceSensor(echo="BOARD7", trigger="BOARD8")
 
 
 def reset_led():
@@ -36,6 +37,9 @@ def main() -> None:
     old images from the 'motion' folder.
     """
 
+    with open('./config.json', 'r') as file:
+        config = json.load(file)
+
     remove_old_images(REMOVE_INTERVAL)
 
     while True:
@@ -50,26 +54,30 @@ def main() -> None:
         full_area = image.shape[0] * image.shape[1]
         plates = find_plates(image)
 
-        sleep(SLEEP_TIME)
-        read_text_flag = distance_sensor.distance < distance_sensor.threshold_distance
+        if config['use_gpio']:
+            sleep(SLEEP_TIME)
+            read_text_flag = distance_sensor.distance < distance_sensor.threshold_distance
+        else:
+            read_text_flag = True
 
         for i, plate in enumerate(plates):
             ratio = plate.shape[1] / plate.shape[0]
             area = plate.shape[1] * plate.shape[0]
 
-            cv2.imwrite(SERVER_IMG, plate)
-            cv2.imwrite(OUTPUT_IMG, plate)
+            if config['save_images']:
+                cv2.imwrite(SERVER_IMG, plate)
+                cv2.imwrite(OUTPUT_IMG, plate)
 
             if not read_text_flag:
                 continue
 
             organge_led.off()
             white_led.on()
-        
+
             if (text := read_text(plate)):
-                blue_led.blink(on_time=1, off_time=0, n=1)
+                blue_led.blink(on_time=2, off_time=0, n=1)
             else:
-                red_led.blink(on_time=1, off_time=0, n=1)
+                red_led.blink(on_time=2, off_time=0, n=1)
                 continue
 
             print(f'{"-" * 30}')

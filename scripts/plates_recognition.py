@@ -1,5 +1,7 @@
-import numpy as np
+import json
+
 import cv2
+import numpy as np
 
 MIN_AREA, MAX_AREA = 0.003, 0.100
 MIN_RATIO, MAX_RATIO = 4, 5
@@ -7,6 +9,9 @@ MIN_RATIO, MAX_RATIO = 4, 5
 RECTS_IMG = './server/static/rects.png'
 PROCESSED_IMG = './server/static/processed.png'
 INDEXED_IMG = './server/static/indexed.png'
+
+with open('./config.json', 'r') as file:
+    config = json.load(file)
 
 
 def find_plates(image: np.ndarray) -> list[np.ndarray]:
@@ -31,8 +36,9 @@ def find_plates(image: np.ndarray) -> list[np.ndarray]:
     idx_copy *= 255 / segment_count
     idx_copy = cv2.applyColorMap(idx_copy.astype(np.uint8), cv2.COLORMAP_HSV)
 
-    cv2.imwrite(PROCESSED_IMG, processed)
-    cv2.imwrite(INDEXED_IMG, idx_copy)
+    if config['save_images']:
+        cv2.imwrite(PROCESSED_IMG, processed)
+        cv2.imwrite(INDEXED_IMG, idx_copy)
 
     plates = []
     image_rects = image.copy()
@@ -49,7 +55,8 @@ def find_plates(image: np.ndarray) -> list[np.ndarray]:
                 plate = _preproces_plate(plate)
                 plates.append(plate)
 
-    cv2.imwrite(RECTS_IMG, image_rects)
+    if config['save_images']:
+        cv2.imwrite(RECTS_IMG, image_rects)
 
     return plates
 
