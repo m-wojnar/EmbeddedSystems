@@ -74,11 +74,14 @@ def _preprocess_image(image: np.ndarray) -> np.ndarray:
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    kernel = np.ones((3, 3))
+    kernel = np.ones((5, 5))
     image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
 
     _, image = cv2.threshold(
         image, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+    
+    kernel = np.ones((7, 7))
+    image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
 
     return image
 
@@ -140,7 +143,8 @@ def _preproces_plate(plate: np.ndarray) -> np.ndarray:
     """
 
     plate = cv2.cvtColor(plate, cv2.COLOR_BGR2GRAY)
-    plate = cv2.equalizeHist(plate)
     plate = cv2.medianBlur(plate, 3)
+    plate = cv2.convertScaleAbs(plate, alpha=1.15)
+    plate = (255 * (plate / 255) ** 5).astype(np.uint8)
 
     return plate

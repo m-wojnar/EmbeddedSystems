@@ -9,12 +9,13 @@ from ocr import read_text
 from plates_recognition import find_plates
 
 LAST_IMG = '/var/lib/motion/lastsnap.jpg'
+LAST_IMG_OUT = '/server/static/lastsnap.png'
 SERVER_IMG = './server/static/output.png'
 OUTPUT_IMG = './outputs/output.png'
 OUTPUT_TEXT = './server/static/text.txt'
 
 REMOVE_INTERVAL = 5.0
-SLEEP_TIME = 2.0
+SLEEP_TIME = 1.0
 
 distance_sensor = DistanceSensor(echo="BOARD7", trigger="BOARD8")
 organge_led = LED("BOARD35")
@@ -38,21 +39,23 @@ def main() -> None:
     while True:
         organge_led.on()
         white_led.off()
+        
+        print(f'{"-" * 30}')
         print('[START]')
 
         if (image := cv2.imread(LAST_IMG)) is None:
             print('[NO IMAGE]')
-            sleep(1)
+            sleep(SLEEP_TIME)
+            continue
+
+        cv2.imwrite(LAST_IMG_OUT, image)
+
+        if config['use_gpio'] and distance_sensor.distance >= distance_sensor.threshold_distance:
+            sleep(SLEEP_TIME)
             continue
 
         full_area = image.shape[0] * image.shape[1]
         plates = find_plates(image)
-
-        if config['use_gpio']:
-            sleep(SLEEP_TIME)
-            read_text_flag = distance_sensor.distance < distance_sensor.threshold_distance
-        else:
-            read_text_flag = True
 
         for i, plate in enumerate(plates):
             ratio = plate.shape[1] / plate.shape[0]
@@ -61,9 +64,6 @@ def main() -> None:
             if config['save_images']:
                 cv2.imwrite(SERVER_IMG, plate)
                 cv2.imwrite(OUTPUT_IMG, plate)
-
-            if not read_text_flag:
-                continue
 
             organge_led.off()
             white_led.on()
@@ -81,8 +81,6 @@ def main() -> None:
 
             with open(OUTPUT_TEXT, 'w') as file:
                 file.write(text)
-
-        print(f'{"-" * 30}')
 
 
 if __name__ == '__main__':
