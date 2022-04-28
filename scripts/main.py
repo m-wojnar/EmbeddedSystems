@@ -1,3 +1,4 @@
+from gpiozero import LED, DistanceSensor
 from time import sleep
 import cv2
 
@@ -13,6 +14,20 @@ OUTPUT_TEXT = './server/static/text.txt'
 REMOVE_INTERVAL = 5.0
 SLEEP_TIME = 2.0
 
+organge_led = LED("BOARD35")
+white_led = LED("BOARD36")
+red_led = LED("BOARD37")
+blue_led = LED("BOARD38")
+
+distance_sensor = DistanceSensor(echo="BOARD7", trigger="BOARD8")
+
+
+def reset_led():
+    organge_led.on()
+    white_led.off()
+    red_led.off()
+    blue_led.off()
+
 
 def main() -> None:
     """
@@ -24,6 +39,7 @@ def main() -> None:
     remove_old_images(REMOVE_INTERVAL)
 
     while True:
+        reset_led()
         print('[START]')
 
         if (image := cv2.imread(LAST_IMG)) is None:
@@ -34,11 +50,26 @@ def main() -> None:
         full_area = image.shape[0] * image.shape[1]
         plates = find_plates(image)
 
+        sleep(SLEEP_TIME)
+        read_text_flag = distance_sensor.distance < distance_sensor.threshold_distance
+
         for i, plate in enumerate(plates):
             ratio = plate.shape[1] / plate.shape[0]
             area = plate.shape[1] * plate.shape[0]
-            
-            if not (text := read_text(plate)):
+
+            cv2.imwrite(SERVER_IMG, plate)
+            cv2.imwrite(OUTPUT_IMG, plate)
+
+            if not read_text_flag:
+                continue
+
+            organge_led.off()
+            white_led.on()
+        
+            if (text := read_text(plate)):
+                blue_led.blink(on_time=1, off_time=0, n=1)
+            else:
+                red_led.blink(on_time=1, off_time=0, n=1)
                 continue
 
             print(f'{"-" * 30}')
@@ -46,14 +77,10 @@ def main() -> None:
             print(f'| area: {area / full_area:.3f}, ratio: {ratio:.2f}')
             print(f'| text: "{text}"')
 
-            cv2.imwrite(SERVER_IMG, plate)
-            cv2.imwrite(OUTPUT_IMG, plate)
-
             with open(OUTPUT_TEXT, 'w') as file:
                 file.write(text)
 
         print(f'{"-" * 30}')
-        sleep(SLEEP_TIME)
 
 
 if __name__ == '__main__':
