@@ -10,7 +10,7 @@ from ocr import read_text
 from plates_recognition import find_plates
 
 LAST_IMG = '/var/lib/motion/lastsnap.jpg'
-LAST_IMG_OUT = '/server/static/lastsnap.png'
+LAST_IMG_OUT = '/server/static/source.png'
 SERVER_IMG = './server/static/output.png'
 OUTPUT_IMG = './outputs/output.png'
 OUTPUT_TEXT = './server/static/text.txt'
@@ -35,6 +35,7 @@ def main() -> None:
     old images from the 'motion' folder.
     """
 
+    camera = cv2.VideoCapture(0)
     with open('./config.json', 'r') as file:
         config = json.load(file)
 
@@ -48,11 +49,8 @@ def main() -> None:
         print(f'{"-" * 30}')
         print('[START]')
 
-        if (image := cv2.imread(LAST_IMG)) is None:
-            print('[NO IMAGE]')
-            continue
-
-        cv2.imwrite(LAST_IMG_OUT, image.astype(np.uint16))
+        _, image = camera.read()
+        cv2.imwrite(LAST_IMG_OUT, image)
 
         if config['use_gpio'] and distance_sensor.distance >= PLATES_DISTANCE_THR:
             continue
