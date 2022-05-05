@@ -2,17 +2,13 @@ import json
 from time import sleep
 
 import cv2
-import numpy as np
 from gpiozero import LED, DistanceSensor
 
-from files_manager import remove_old_images
 from ocr import read_text
 from plates_recognition import find_plates
 
-LAST_IMG = '/var/lib/motion/lastsnap.jpg'
-LAST_IMG_OUT = '/server/static/source.png'
+LAST_IMG_OUT = './server/static/source.png'
 SERVER_IMG = './server/static/output.png'
-OUTPUT_IMG = './outputs/output.png'
 OUTPUT_TEXT = './server/static/text.txt'
 
 REMOVE_INTERVAL = 5.0
@@ -20,6 +16,8 @@ SLEEP_TIME = 1.0
 
 PLATES_DISTANCE_THR = 0.4
 TEXT_DISTANCE_THR = 0.2
+
+camera = cv2.VideoCapture(0)
 
 distance_sensor = DistanceSensor(echo="BOARD7", trigger="BOARD8")
 organge_led = LED("BOARD35")
@@ -35,11 +33,8 @@ def main() -> None:
     old images from the 'motion' folder.
     """
 
-    camera = cv2.VideoCapture(0)
     with open('./config.json', 'r') as file:
         config = json.load(file)
-
-    remove_old_images(REMOVE_INTERVAL)
 
     while True:
         organge_led.off()
@@ -49,7 +44,11 @@ def main() -> None:
         print(f'{"-" * 30}')
         print('[START]')
 
-        _, image = camera.read()
+        return_val, image = camera.read()
+        if not return_val:
+            print('[NO IMAGE]')
+            continue
+
         cv2.imwrite(LAST_IMG_OUT, image)
 
         if config['use_gpio'] and distance_sensor.distance >= PLATES_DISTANCE_THR:
@@ -65,7 +64,6 @@ def main() -> None:
 
             if config['save_images']:
                 cv2.imwrite(SERVER_IMG, plate)
-                cv2.imwrite(OUTPUT_IMG, plate)
 
             if config['use_gpio'] and distance_sensor.distance >= TEXT_DISTANCE_THR:
                 continue
@@ -89,4 +87,9 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print(f'{"-" * 30}')
+        print('[END]')
+        del camera
