@@ -2,6 +2,7 @@ import json
 from time import sleep
 
 import cv2
+import numpy as np
 from gpiozero import LED, DistanceSensor
 
 from files_manager import remove_old_images
@@ -51,7 +52,7 @@ def main() -> None:
             print('[NO IMAGE]')
             continue
 
-        cv2.imwrite(LAST_IMG_OUT, image)
+        cv2.imwrite(LAST_IMG_OUT, image.astype(np.uint16))
 
         if config['use_gpio'] and distance_sensor.distance >= PLATES_DISTANCE_THR:
             continue
