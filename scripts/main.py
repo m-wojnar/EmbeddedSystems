@@ -36,6 +36,9 @@ def main() -> None:
     with open('./config.json', 'r') as file:
         config = json.load(file)
 
+    with open(OUTPUT_TEXT, 'w+') as file:
+        file.write('')
+
     while True:
         organge_led.off()
         white_led.off()
