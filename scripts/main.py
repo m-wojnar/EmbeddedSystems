@@ -1,4 +1,4 @@
-import json
+from argparse import ArgumentParser
 from time import sleep
 
 import cv2
@@ -7,15 +7,16 @@ from gpiozero import LED, DistanceSensor
 from ocr import read_text
 from plates_recognition import find_plates
 
+
 LAST_IMG_OUT = './server/static/source.png'
-SERVER_IMG = './server/static/output.png'
+PLATE_IMG = './server/static/output.png'
 OUTPUT_TEXT = './server/static/text.txt'
 
-REMOVE_INTERVAL = 5.0
 SLEEP_TIME = 1.0
 
 PLATES_DISTANCE_THR = 0.4
 TEXT_DISTANCE_THR = 0.2
+
 
 camera = cv2.VideoCapture(0)
 
@@ -33,8 +34,10 @@ def main() -> None:
     old images from the 'motion' folder.
     """
 
-    with open('./config.json', 'r') as file:
-        config = json.load(file)
+    args = ArgumentParser()
+    args.add_argument('--visual_mode', default=False, action='store_true')
+    args.add_argument('--interactive_mode', default=False, action='store_true')
+    args = args.parse_args()
 
     with open(OUTPUT_TEXT, 'w+') as file:
         file.write('')
@@ -42,7 +45,9 @@ def main() -> None:
     while True:
         organge_led.off()
         white_led.off()
-        sleep(SLEEP_TIME)
+
+        if args.visual_mode:
+            sleep(SLEEP_TIME)
         
         print(f'{"-" * 30}')
         print('[START]')
@@ -52,23 +57,24 @@ def main() -> None:
             print('[NO IMAGE]')
             continue
 
-        cv2.imwrite(LAST_IMG_OUT, image)
+        if args.visual_mode:
+            cv2.imwrite(LAST_IMG_OUT, image)
 
-        if config['use_gpio'] and distance_sensor.distance >= PLATES_DISTANCE_THR:
+        if args.interactive_mode and distance_sensor.distance >= PLATES_DISTANCE_THR:
             continue
 
         organge_led.on()
         full_area = image.shape[0] * image.shape[1]
-        plates = find_plates(image)
+        plates = find_plates(image, args.visual_mode)
 
         for i, plate in enumerate(plates):
             ratio = plate.shape[1] / plate.shape[0]
             area = plate.shape[1] * plate.shape[0]
 
-            if config['save_images']:
-                cv2.imwrite(SERVER_IMG, plate)
+            if args.visual_mode:
+                cv2.imwrite(PLATE_IMG, plate)
 
-            if config['use_gpio'] and distance_sensor.distance >= TEXT_DISTANCE_THR:
+            if args.interactive_mode and distance_sensor.distance >= TEXT_DISTANCE_THR:
                 continue
 
             organge_led.off()

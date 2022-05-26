@@ -1,5 +1,3 @@
-import json
-
 import cv2
 import numpy as np
 
@@ -10,16 +8,15 @@ RECTS_IMG = './server/static/rects.png'
 PROCESSED_IMG = './server/static/processed.png'
 INDEXED_IMG = './server/static/indexed.png'
 
-with open('./config.json', 'r') as file:
-    config = json.load(file)
 
-
-def find_plates(image: np.ndarray) -> list[np.ndarray]:
+def find_plates(image: np.ndarray, visual_mode: bool) -> list[np.ndarray]:
     """
     Extracts licence plates images from given image
 
     image: np.ndarray
         image to process
+    visual_mode: bool
+        save images to files
 
     returns: list[np.ndarray]
         list of images with extraced plates
@@ -36,7 +33,7 @@ def find_plates(image: np.ndarray) -> list[np.ndarray]:
     idx_copy *= 255 / segment_count
     idx_copy = cv2.applyColorMap(idx_copy.astype(np.uint8), cv2.COLORMAP_HSV)
 
-    if config['save_images']:
+    if visual_mode:
         cv2.imwrite(PROCESSED_IMG, processed)
         cv2.imwrite(INDEXED_IMG, idx_copy)
 
@@ -55,7 +52,7 @@ def find_plates(image: np.ndarray) -> list[np.ndarray]:
                 plate = _preproces_plate(plate)
                 plates.append(plate)
 
-    if config['save_images']:
+    if visual_mode:
         cv2.imwrite(RECTS_IMG, image_rects)
 
     return plates
