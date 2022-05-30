@@ -6,12 +6,12 @@ BACKGROUND_MODE=false
 ARGS_LIST=()
 
 for arg in $@; do
-    if [[ $arg == "--visual_mode" ]]; then
+    if [[ $arg == "--visual_mode" || $arg == "-v" ]]; then
         VISUAL_MODE=true
         ARGS_LIST+=("--visual_mode")
-    elif [[ $arg == "--interactive_mode" ]]; then
+    elif [[ $arg == "--interactive_mode" || $arg == "-i" ]]; then
         ARGS_LIST+=("--interactive_mode")
-    elif [[ $arg == "--background_mode" ]]; then
+    elif [[ $arg == "--background_mode" || $arg == "-b" ]]; then
         BACKGROUND_MODE=true
     fi
 done
